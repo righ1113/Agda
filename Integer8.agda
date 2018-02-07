@@ -21,9 +21,15 @@ record IsAbelianGroup (A : Set) (_∙_ : A → A → A) (e : A) (iF : A → A) :
   field
     isGroup : IsGroup A _∙_ e iF
     comm : ∀ x y → x ∙ y ≡ y ∙ x
+record IsRing (A : Set) (_⊕_ _⊗_ : A → A → A) (eP eT : A) (iF : A → A) : Set where
+  field
+    ⊕isAbelianGroup : IsAbelianGroup A _⊕_ eP iF
+    ⊗isMonoid : IsMonoid A _⊗_ eT
+    isDistR : (x y z : A) → (x ⊕ y) ⊗ z ≡ (x ⊗ z) ⊕ (y ⊗ z)
+    isDistL : (x y z : A) → x ⊗ (y ⊕ z) ≡ (x ⊗ y) ⊕ (x ⊗ z)
 -- ----------------------------
 
--- ---------- nat ----------
+-- ---------- practice nat ----------
 ℕ+-isSemiGroup : IsSemiGroup ℕ _+_
 ℕ+-isSemiGroup = record { assoc = ℕ+-assoc }
   where
@@ -112,21 +118,6 @@ invℤ (I x x₁) = I x₁ x
 -- ---------------------------
 
 -- ---------- Int * ----------
-plusInfix : (x y z : ℕ) → x + y + z ≡ x + (y + z)
-plusInfix zero y z = refl
-plusInfix (suc x) y z = cong suc (plusInfix x y z)
-
-timesInfix : (x y z : ℕ) → x * y * z ≡ x * (y * z)
-timesInfix zero y z = refl
-timesInfix (suc x) y z = begin
-    (y + x * y) * z
-  ≡⟨ *-distribʳ-+ z y (x * y) ⟩
-    y * z + x * y * z
-  ≡⟨ cong (\ t → y * z + t) (timesInfix x y z) ⟩
-    y * z + x * (y * z)
-  ∎
-  where open PropEq.≡-Reasoning
-
 ℤ**-isSemiGroup : IsSemiGroup ℤ _**_
 ℤ**-isSemiGroup = record { assoc = ℤ**-assoc }
   where
@@ -151,25 +142,25 @@ timesInfix (suc x) y z = begin
             x * z * v + y * u * v + (x * u + y * z) * w
           ≡⟨ cong (\ t → (x * z * v + y * u * v + t)) (*-distribʳ-+ w (x * u) (y * z)) ⟩
             x * z * v + y * u * v + (x * u * w + y * z * w)
-          ≡⟨ plusInfix (x * z * v) (y * u * v) (x * u * w + y * z * w) ⟩
+          ≡⟨ +-assoc (x * z * v) (y * u * v) (x * u * w + y * z * w) ⟩
             x * z * v + (y * u * v + (x * u * w + y * z * w))
           ≡⟨ cong (\ t → ((x * z * v) + t)) (+-comm (y * u * v) (x * u * w + y * z * w)) ⟩
             x * z * v + ((x * u * w + y * z * w) + y * u * v)
-          ≡⟨ sym (plusInfix (x * z * v) (x * u * w + y * z * w) (y * u * v)) ⟩
+          ≡⟨ sym (+-assoc (x * z * v) (x * u * w + y * z * w) (y * u * v)) ⟩
             x * z * v + (x * u * w + y * z * w) + y * u * v
           ≡⟨ sym (cong (\ t → (t + y * u * v)) ((assoc ℕ+-isSemiGroup) (x * z * v) (x * u * w) (y * z * w))) ⟩
             x * z * v + x * u * w + y * z * w + y * u * v
-          ≡⟨ cong (\ t → t + x * u * w + y * z * w + y * u * v) (timesInfix x z v) ⟩
+          ≡⟨ cong (\ t → t + x * u * w + y * z * w + y * u * v) (*-assoc x z v) ⟩
             x * (z * v) + x * u * w + y * z * w + y * u * v
-          ≡⟨ cong (\ t → x * (z * v) + t + y * z * w + y * u * v) (timesInfix x u w) ⟩
+          ≡⟨ cong (\ t → x * (z * v) + t + y * z * w + y * u * v) (*-assoc x u w) ⟩
             x * (z * v) + x * (u * w) + y * z * w + y * u * v
-          ≡⟨ cong (\ t → x * (z * v) + x * (u * w) + t + y * u * v) (timesInfix y z w) ⟩
+          ≡⟨ cong (\ t → x * (z * v) + x * (u * w) + t + y * u * v) (*-assoc y z w) ⟩
             x * (z * v) + x * (u * w) + y * (z * w) + y * u * v
-          ≡⟨ cong (\ t → x * (z * v) + x * (u * w) + y * (z * w) + t) (timesInfix y u v) ⟩
+          ≡⟨ cong (\ t → x * (z * v) + x * (u * w) + y * (z * w) + t) (*-assoc y u v) ⟩
             x * (z * v) + x * (u * w) + y * (z * w) + y * (u * v)
           ≡⟨ sym (cong (\ t → (t + y * (z * w) + y * (u * v))) (*-distribˡ-+ x (z * v) (u * w))) ⟩
             x * (z * v + u * w) + y * (z * w) + y * (u * v)
-          ≡⟨ plusInfix (x * (z * v + u * w)) (y * (z * w))  (y * (u * v)) ⟩
+          ≡⟨ +-assoc (x * (z * v + u * w)) (y * (z * w))  (y * (u * v)) ⟩
             x * (z * v + u * w) + (y * (z * w) + y * (u * v))
           ≡⟨ sym (cong (\ t → (x * (z * v + u * w) + t)) (*-distribˡ-+ y (z * w) (u * v))) ⟩
             x * (z * v + u * w) + y * (z * w + u * v)
@@ -199,71 +190,79 @@ timesInfix (suc x) y z = begin
         x*0+x*1=x zero (suc x₁) = cong suc (x*0+x*1=x zero x₁)
         x*0+x*1=x (suc x) zero = x*0+x*1=x x zero
         x*0+x*1=x (suc x) (suc x₁) = x*0+x*1=x x (suc x₁)
+-- ---------------------------
 
-ℤdistR : (x y z : ℤ) → (x ++ y) ** z ≡ (x ** z) ++ (y ** z)
-ℤdistR O O O = refl
-ℤdistR O O (I x x₁) = refl
-ℤdistR O (I x x₁) O = refl
-ℤdistR O (I x x₁) (I x₂ x₃) = refl
-ℤdistR (I x x₁) O O = refl
-ℤdistR (I x x₁) O (I x₂ x₃) = refl
-ℤdistR (I x x₁) (I x₂ x₃) O = refl
-ℤdistR (I x x₁) (I x₂ x₃) (I x₄ x₅) = cong₂ I (ℤdistR₁ x x₂ x₄ x₁ x₃ x₅) (ℤdistR₁ x x₂ x₅ x₁ x₃ x₄)
-  where
-    open PropEq.≡-Reasoning
-    open IsSemiGroup
-    ℤdistR₁ : (x y z u v w : ℕ) →
-      (x + y) * z + (u + v) * w ≡ x * z + u * w + (y * z + v * w)
-    ℤdistR₁ x y z u v w = begin
-        (x + y) * z + (u + v) * w
-      ≡⟨ cong (\ t → t + (u + v) * w) (*-distribʳ-+ z x y) ⟩
-         x * z + y * z + (u + v) * w
-      ≡⟨ cong (\ t → (x * z + y * z + t)) (*-distribʳ-+ w u v) ⟩
-         x * z + y * z + (u * w + v * w)
-      ≡⟨ plusInfix (x * z) (y * z) (u * w + v * w) ⟩
-         x * z + (y * z + (u * w + v * w))
-      ≡⟨ cong (\ t → x * z + t) (+-comm (y * z) (u * w + v * w)) ⟩
-         x * z + ((u * w + v * w) + y * z)
-      ≡⟨ cong (\ t → x * z + t) ((assoc ℕ+-isSemiGroup) (u * w) (v * w) (y * z)) ⟩
-         x * z + (u * w + (v * w + y * z))
-      ≡⟨ cong (\ t → x * z + (u * w + t)) (+-comm (v * w) (y * z)) ⟩
-         x * z + (u * w + (y * z + v * w))
-      ≡⟨ sym ((assoc ℕ+-isSemiGroup) (x * z) (u * w) (y * z + v * w)) ⟩
-         x * z + u * w + (y * z + v * w)
-      ∎
-
-ℤdistL : (x y z : ℤ) → x ** (y ++ z) ≡ (x ** y) ++ (x ** z)
-ℤdistL O O O = refl
-ℤdistL O O (I x x₁) = refl
-ℤdistL O (I x x₁) O = refl
-ℤdistL O (I x x₁) (I x₂ x₃) = refl
-ℤdistL (I x x₁) O O = refl
-ℤdistL (I x x₁) O (I x₂ x₃) = refl
-ℤdistL (I x x₁) (I x₂ x₃) O = refl
-ℤdistL (I x x₁) (I x₂ x₃) (I x₄ x₅) = cong₂ I (ℤdistL₁ x x₁ x₂ x₃ x₄ x₅) (ℤdistL₁ x x₁ x₃ x₂ x₅ x₄)
-  where
-    open PropEq.≡-Reasoning
-    open IsSemiGroup
-    ℤdistL₁ : (x y z u v w : ℕ) →
-      x * (z + v) + y * (u + w) ≡ x * z + y * u + (x * v + y * w)
-    ℤdistL₁ x y z u v w = begin
-         x * (z + v) + y * (u + w)
-      ≡⟨ cong (\ t → t + y * (u + w)) (*-distribˡ-+ x z v) ⟩
-         x * z + x * v + y * (u + w)
-      ≡⟨ cong (\ t → x * z + x * v + t) (*-distribˡ-+ y u w) ⟩
-         x * z + x * v + (y * u + y * w)
-      ≡⟨ plusInfix (x * z) (x * v) (y * u + y * w) ⟩
-         x * z + (x * v + (y * u + y * w))
-      ≡⟨ sym (cong (\ t → x * z + t) ((assoc ℕ+-isSemiGroup) (x * v) (y * u) (y * w))) ⟩
-         x * z + ((x * v + y * u) + y * w)
-      ≡⟨ cong (\ t → x * z + (t + y * w)) (+-comm (x * v) (y * u)) ⟩
-         x * z + ((y * u + x * v) + y * w)
-      ≡⟨ cong (\ t → x * z + t) ((assoc ℕ+-isSemiGroup) (y * u) (x * v) (y * w)) ⟩
-         x * z + (y * u + (x * v + y * w))
-      ≡⟨ sym ((assoc ℕ+-isSemiGroup) (x * z) (y * u) (x * v + y * w)) ⟩
-         x * z + y * u + (x * v + y * w)
-      ∎
-
+-- ---------- Int + * ----------
+ℤ++0invℤ-**1-isRing : IsRing ℤ _++_ _**_ O (I 1 0) invℤ
+ℤ++0invℤ-**1-isRing =
+  record
+    { ⊕isAbelianGroup = ℤ++Oinvℤ-isAbelianGroup
+    ; ⊗isMonoid = ℤ**1-isMonoid
+    ; isDistR = ℤdistR
+    ; isDistL = ℤdistL }
+    where
+      ℤdistR : (x y z : ℤ) → (x ++ y) ** z ≡ (x ** z) ++ (y ** z)
+      ℤdistR O O O = refl
+      ℤdistR O O (I x x₁) = refl
+      ℤdistR O (I x x₁) O = refl
+      ℤdistR O (I x x₁) (I x₂ x₃) = refl
+      ℤdistR (I x x₁) O O = refl
+      ℤdistR (I x x₁) O (I x₂ x₃) = refl
+      ℤdistR (I x x₁) (I x₂ x₃) O = refl
+      ℤdistR (I x x₁) (I x₂ x₃) (I x₄ x₅) = cong₂ I (ℤdistR₁ x x₂ x₄ x₁ x₃ x₅) (ℤdistR₁ x x₂ x₅ x₁ x₃ x₄)
+        where
+          open PropEq.≡-Reasoning
+          open IsSemiGroup
+          ℤdistR₁ : (x y z u v w : ℕ) →
+            (x + y) * z + (u + v) * w ≡ x * z + u * w + (y * z + v * w)
+          ℤdistR₁ x y z u v w = begin
+              (x + y) * z + (u + v) * w
+            ≡⟨ cong (\ t → t + (u + v) * w) (*-distribʳ-+ z x y) ⟩
+               x * z + y * z + (u + v) * w
+            ≡⟨ cong (\ t → (x * z + y * z + t)) (*-distribʳ-+ w u v) ⟩
+               x * z + y * z + (u * w + v * w)
+            ≡⟨ +-assoc (x * z) (y * z) (u * w + v * w) ⟩
+               x * z + (y * z + (u * w + v * w))
+            ≡⟨ cong (\ t → x * z + t) (+-comm (y * z) (u * w + v * w)) ⟩
+               x * z + ((u * w + v * w) + y * z)
+            ≡⟨ cong (\ t → x * z + t) ((assoc ℕ+-isSemiGroup) (u * w) (v * w) (y * z)) ⟩
+               x * z + (u * w + (v * w + y * z))
+            ≡⟨ cong (\ t → x * z + (u * w + t)) (+-comm (v * w) (y * z)) ⟩
+               x * z + (u * w + (y * z + v * w))
+            ≡⟨ sym ((assoc ℕ+-isSemiGroup) (x * z) (u * w) (y * z + v * w)) ⟩
+               x * z + u * w + (y * z + v * w)
+            ∎
+      ℤdistL : (x y z : ℤ) → x ** (y ++ z) ≡ (x ** y) ++ (x ** z)
+      ℤdistL O O O = refl
+      ℤdistL O O (I x x₁) = refl
+      ℤdistL O (I x x₁) O = refl
+      ℤdistL O (I x x₁) (I x₂ x₃) = refl
+      ℤdistL (I x x₁) O O = refl
+      ℤdistL (I x x₁) O (I x₂ x₃) = refl
+      ℤdistL (I x x₁) (I x₂ x₃) O = refl
+      ℤdistL (I x x₁) (I x₂ x₃) (I x₄ x₅) = cong₂ I (ℤdistL₁ x x₁ x₂ x₃ x₄ x₅) (ℤdistL₁ x x₁ x₃ x₂ x₅ x₄)
+        where
+          open PropEq.≡-Reasoning
+          open IsSemiGroup
+          ℤdistL₁ : (x y z u v w : ℕ) →
+            x * (z + v) + y * (u + w) ≡ x * z + y * u + (x * v + y * w)
+          ℤdistL₁ x y z u v w = begin
+               x * (z + v) + y * (u + w)
+            ≡⟨ cong (\ t → t + y * (u + w)) (*-distribˡ-+ x z v) ⟩
+               x * z + x * v + y * (u + w)
+            ≡⟨ cong (\ t → x * z + x * v + t) (*-distribˡ-+ y u w) ⟩
+               x * z + x * v + (y * u + y * w)
+            ≡⟨ +-assoc (x * z) (x * v) (y * u + y * w) ⟩
+               x * z + (x * v + (y * u + y * w))
+            ≡⟨ sym (cong (\ t → x * z + t) ((assoc ℕ+-isSemiGroup) (x * v) (y * u) (y * w))) ⟩
+               x * z + ((x * v + y * u) + y * w)
+            ≡⟨ cong (\ t → x * z + (t + y * w)) (+-comm (x * v) (y * u)) ⟩
+               x * z + ((y * u + x * v) + y * w)
+            ≡⟨ cong (\ t → x * z + t) ((assoc ℕ+-isSemiGroup) (y * u) (x * v) (y * w)) ⟩
+               x * z + (y * u + (x * v + y * w))
+            ≡⟨ sym ((assoc ℕ+-isSemiGroup) (x * z) (y * u) (x * v + y * w)) ⟩
+               x * z + y * u + (x * v + y * w)
+            ∎
 -- ---------------------------
 
 
@@ -274,6 +273,6 @@ timesInfix (suc x) y z = begin
 
 
 
--- (-1) ** (-1) = 1
+-- (-1) * (-1) = 1
 minus : I 0 1 ** I 0 1 ≡ I 1 0
 minus = refl
