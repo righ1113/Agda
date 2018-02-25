@@ -11,4 +11,3 @@ curry p = (let f = subst id p (lemma1 p) in f (lemma1 p))
 
 
 
-
