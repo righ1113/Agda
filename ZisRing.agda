@@ -1,11 +1,11 @@
 module ZisRing where
 
 open import Data.Product using (_×_; _,_) 
+open import Function using (_∘_)
 open import Relation.Binary.PropositionalEquality
   as PropEq using (_≡_; refl; cong; sym)
 
 open import Integer10 -- 整数の定義
-
 
 -- ---------- record ----------
 record IsSemiGroup (A : Set) (_∙_ : A → A → A) : Set where
@@ -119,18 +119,17 @@ mutual
     x+zero≡x = lemma5
 
 -- Z,+が群であること
+leftInv : ∀ x → (opposite x + x) ≡ zero
+leftInv zero = refl
+leftInv (succ x) = leftInv x
+leftInv (pred x) = leftInv x
+rightInv : ∀ x → (x + opposite x) ≡ zero
+rightInv zero = refl
+rightInv (succ x) = rightInv x
+rightInv (pred x) = rightInv x
 ℤ+ZeroOpposite-isGroup : IsGroup ℤ _+_ zero opposite
 ℤ+ZeroOpposite-isGroup = record { isMonoid = ℤ+Zero-isMonoid ;
                                                            inv = (leftInv , rightInv) }
-  where
-    leftInv : ∀ x → (opposite x + x) ≡ zero
-    leftInv zero = refl
-    leftInv (succ x) = leftInv x
-    leftInv (pred x) = leftInv x
-    rightInv : ∀ x → (x + opposite x) ≡ zero
-    rightInv zero = refl
-    rightInv (succ x) = rightInv x
-    rightInv (pred x) = rightInv x
 
 -- Z,+がアーベル群であること
 ℤ+ZeroOpposite-Comm : ∀ x y → (x + y) ≡ (y + x)
@@ -222,22 +221,23 @@ one = succ zero
 -- rewrite (-1) + 1 ≡ 0
 -- rewrite x + 0 ≡ x
 -- 左辺と右辺を入れ替える
-
 -₁ = pred zero
 
-seed : -₁ * zero ≡ -₁ * -₁ + -₁
-seed = refl
+seed2 : (x : ℤ) → x * zero ≡ x * -₁ + x
+seed2 x rewrite leftInv x = refl
 lemma1 : (-₁ * zero ≡ -₁ * -₁ + -₁) → (zero ≡ -₁ * -₁ + -₁)
-lemma1 _ = refl
+lemma1 prf = prf
 lemma2 : (zero ≡ -₁ * -₁ + -₁) → (zero + one ≡ -₁ * -₁ + -₁ + one)
-lemma2 p = cong (_+ one) p
+lemma2 prf = cong (_+ one) prf
 lemma3 : (zero + one ≡ -₁ * -₁ + -₁ + one) → (one ≡ -₁ * -₁)
-lemma3 _ = refl
+lemma3 prf = prf
 lemma4 : (one ≡ -₁ * -₁) → (-₁ * -₁ ≡ one)
 lemma4 p = sym p
 
 theorem2 : pred zero * pred zero ≡ succ zero
-theorem2 = lemma4 (lemma3 (lemma2 (lemma1 seed)))
+theorem2 = (lemma4 ∘ lemma3 ∘ lemma2 ∘ lemma1) (seed2 -₁)
+
+
 
 
 
