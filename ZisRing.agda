@@ -36,7 +36,7 @@ lemma5 : (x : ℤ) → x + zero ≡ x
 lemma5 zero = refl
 lemma5 (succ _) = refl
 lemma5 (pred _) = refl
-postulate
+postulate -- ここだけ
   succPred : (x : ℤ) → succ (pred x) ≡ x
   predSucc : (x : ℤ) → pred (succ x) ≡ x
 mutual
@@ -65,46 +65,12 @@ mutual
 
 ℤ+-assoc : ∀ x y z → (x + y) + z ≡ x + (y + z)
 ℤ+-assoc zero y z = refl
-ℤ+-assoc (succ x) zero z = refl
-ℤ+-assoc (succ x) (succ y) zero = refl
-ℤ+-assoc (succ x) (succ y) (succ z) = lemma6 x y z
-  where
-    lemma6 : (x y z : ℤ) →
-      succ (succ (succ x + y) + z) ≡ succ (succ x + (succ y + z))
-    lemma6 x y z rewrite succOut1 x y
-                                    | succOut1 (succ (x + y)) z
-                                    | succOut1 (x + y) z
-                                    | succOut1 x (succ y + z)
-                                    | succOut1 y z
-                                    | succOut2 x (y + z)
-            = cong (λ x → succ (succ (succ x))) (ℤ+-assoc x y z)
-ℤ+-assoc (succ x) (succ y) (pred z) = ℤ+-assoc (succ x) y z
-ℤ+-assoc (succ x) (pred y) zero = lemma5 (x + y)
-ℤ+-assoc (succ x) (pred y) (succ z) rewrite succOut2 (x + y) z
-                                                                  | succOut1 x (y + z)
-            = cong succ (ℤ+-assoc x y z)
-ℤ+-assoc (succ x) (pred y) (pred z) rewrite predOut2 (x + y) z
-                                                                  | predOut1 y z
-                                                                  | predOut2 x (y + z)
-            = cong pred (ℤ+-assoc x y z)
-ℤ+-assoc (pred x) zero z = refl
-ℤ+-assoc (pred x) (succ y) zero = lemma5 (x + y)
-ℤ+-assoc (pred x) (succ y) (succ z) rewrite succOut2 (x + y) z
-                                                                  | succOut1 y z
-                                                                  | succOut2 x (y + z)
-            = cong succ (ℤ+-assoc x y z) 
-ℤ+-assoc (pred x) (succ y) (pred z) rewrite predOut2 (x + y) z
-                                                                  | predOut1 x (y + z)
-            = cong pred (ℤ+-assoc x y z)
-ℤ+-assoc (pred x) (pred y) zero = refl
-ℤ+-assoc (pred x) (pred y) (succ z) = ℤ+-assoc (pred x) y z
-ℤ+-assoc (pred x) (pred y) (pred z) rewrite predOut1 (pred x + y) z
-                                                                  | predOut1 x y
-                                                                  | predOut1 (x + y) z
-                                                                  | predOut1 x (pred y + z)
-                                                                  | predOut1 y z
-                                                                  | predOut2 x (y + z)
-            = cong (λ x → pred (pred (pred x))) (ℤ+-assoc x y z)
+ℤ+-assoc (succ x) y z rewrite succOut1 x y
+                                             | succOut1 (x + y) z
+                                             | succOut1 x (y + z) = cong succ (ℤ+-assoc x y z)
+ℤ+-assoc (pred x) y z rewrite predOut1 x y
+                                             | predOut1 (x + y) z
+                                             | predOut1 x (y + z) = cong pred (ℤ+-assoc x y z)
 ℤ+-isSemiGroup : IsSemiGroup ℤ _+_
 ℤ+-isSemiGroup = record { assoc = ℤ+-assoc }
 
@@ -153,7 +119,22 @@ lemma7 x y (succ z) rewrite succOut2 y z | lemma7 x y z
   = ℤ+-assoc (x * y) (x * z) x
 lemma7 x y (pred z) rewrite predOut2 y z | lemma7 x y z
   = ℤ+-assoc (x * y) (x * z) (opposite x)
-postulate lemma8 : (x y : ℤ) → x * opposite y ≡ opposite (x * y)
+lemma8-3 : (x y : ℤ) → opposite x + opposite y ≡ opposite (x + y)
+lemma8-3 x zero rewrite lemma5 (opposite x) | lemma5 x = refl
+lemma8-3 x (succ y) rewrite predOut2 (opposite x) (opposite y)
+                                            | succOut2 x y = cong pred (lemma8-3 x y)
+lemma8-3 x (pred y) rewrite succOut2 (opposite x) (opposite y)
+                                            | predOut2 x y = cong succ (lemma8-3 x y)
+lemma8-5 : (x y : ℤ) → opposite x + y ≡ opposite (x + (opposite y))
+lemma8-5 x zero rewrite lemma5 (opposite x) | lemma5 x = refl
+lemma8-5 x (succ y) rewrite succOut2 (opposite x) y
+                                           | predOut2 x (opposite y) = cong succ (lemma8-5 x y)
+lemma8-5 x (pred y) rewrite predOut2 (opposite x) y
+                                           | succOut2 x (opposite y) = cong pred (lemma8-5 x y)
+lemma8-2 : (x y : ℤ) → x * opposite y ≡ opposite (x * y)
+lemma8-2 x zero = refl
+lemma8-2 x (succ y) rewrite lemma8-2 x y | lemma8-3 (x * y) x = refl
+lemma8-2 x (pred y) rewrite lemma8-2 x y | lemma8-5 (x * y) x = refl
 ℤ*-isSemiGroup : IsSemiGroup ℤ _*_
 ℤ*-isSemiGroup = record { assoc = ℤ*-assoc }
   where
@@ -162,7 +143,7 @@ postulate lemma8 : (x y : ℤ) → x * opposite y ≡ opposite (x * y)
     ℤ*-assoc x y (succ z) rewrite lemma7 x (y * z) y
       = cong (_+ (x * y)) (ℤ*-assoc x y z)
     ℤ*-assoc x y (pred z) rewrite lemma7 x (y * z) (opposite y)
-                                                | lemma8 x y
+                                                | lemma8-2 x y
       = cong (_+ opposite (x * y)) (ℤ*-assoc x y z)
 
 -- Z,*がモノイドであること
@@ -181,7 +162,7 @@ one = succ zero
     x*one≡x _ = refl
 
 
--- Z,が環であること
+-- Zが環であること
 ℤ+ZeroOppo-*One-isRing : IsRing ℤ _+_ _*_ zero one opposite
 ℤ+ZeroOppo-*One-isRing
   = record { ⊕isAbelianGroup = ℤ+ZeroOpposite-isAbelianGroup ;
@@ -203,11 +184,10 @@ one = succ zero
                                               | predOut1 a c
                                               | predOut1 (a + c) (b + d)
          = cong pred (lemma9 a b c d)
-      postulate lemma10 : ∀ x y → opposite (x + y) ≡ opposite x + opposite y 
       isDistR-Z : ∀ x y z → ((x + y) * z) ≡ ((x * z) + (y * z))
       isDistR-Z x y zero = refl
       isDistR-Z x y (succ z) rewrite isDistR-Z x y z = lemma9 (x * z) (y * z) x y
-      isDistR-Z x y (pred z) rewrite lemma10 x y | isDistR-Z x y z
+      isDistR-Z x y (pred z) rewrite sym (lemma8-3 x y) | isDistR-Z x y z
         = lemma9 (x * z) (y * z) (opposite x) (opposite y)
 
 
@@ -221,8 +201,8 @@ one = succ zero
 -- rewrite (-1) + 1 ≡ 0
 -- rewrite x + 0 ≡ x
 -- 左辺と右辺を入れ替える
--₁ = pred zero
 
+-₁ = pred zero
 seed2 : (x : ℤ) → x * zero ≡ x * -₁ + x
 seed2 x rewrite leftInv x = refl
 lemma1 : (-₁ * zero ≡ -₁ * -₁ + -₁) → (zero ≡ -₁ * -₁ + -₁)
