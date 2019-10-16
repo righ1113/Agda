@@ -24,6 +24,8 @@ data Hoge : Set where
 
 
 fToA : ℕ → Hoge
+-- ↓CollatzIsTrueにdがあらわれてないと、
+-- 1x+1と3x+1のどちらを証明したか分からない
 final : ℕ → CollatzIsTrue
 fToA d = Is (final d)
 final zero = {!!}
