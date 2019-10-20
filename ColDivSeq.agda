@@ -19,6 +19,8 @@ data CollatzIsTrue : Set where
 data Hoge : Set where
   Is : CollatzIsTrue → Hoge
 
+-- 1x+1&3x+1DoNotHave2Counter : ℕ → (m : ℕ) → n:ℕ → (Hoge) →「R(m)=1かつR(n)=1かつm≠nかつR(m)≠R(n)」🔴
+-- 　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　↑どれかで矛盾する、ということ
 1x+1&3x+1isLT1Counter : ℕ → (m : ℕ) → ℕ → (Hoge) → LTOneCounter m
 1x+1&3x+1isLT1Counter d m n = {!!}
 
