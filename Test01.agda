@@ -33,3 +33,15 @@ mutual
   limitedDivSeq : (n : ℕ) → First n
   limitedDivSeq zero    = {!   !}
   limitedDivSeq (suc n) = let bar = contraFirstToAll n in tekito n bar
+
+-- Idris
+{-
+postulate foo : (t : Nat) -> LT' t (S t)
+contraFirstToAll :
+  (z : Nat) -> (((AllLimited . B.allDivSeq) z -> Void) -> ((FirstLimited . B.allDivSeq) z -> Void))
+contraFirstToAll Z     allToVoid _ = allToVoid IsAllLimited00
+contraFirstToAll (S z) _         _ = wfInd {P=(\z=>Void)} {rel=LT'} step (S z) where
+  step : (x : Nat) -> ((y : Nat) -> LT' y x -> Void) -> Void
+  step Z     _  = believe_me "ここには来ない"
+  step (S x) rs = rs x (foo x)
+-}
