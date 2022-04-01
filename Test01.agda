@@ -44,4 +44,12 @@ contraFirstToAll (S z) _         _ = wfInd {P=(\z=>Void)} {rel=LT'} step (S z) w
   step : (x : Nat) -> ((y : Nat) -> LT' y x -> Void) -> Void
   step Z     _  = believe_me "ここには来ない"
   step (S x) rs = rs x (foo x)
+-- ?rhs1 が書けない！！
+contraFirstToAll :
+  (z : Nat) -> (((AllLimited . B.allDivSeq) z -> Void) -> ((FirstLimited . B.allDivSeq) z -> Void))
+contraFirstToAll Z     allToVoid _ = allToVoid IsAllLimited00
+contraFirstToAll (S z) _         _ = step (S z) SIsNotZ (wellFounded {rel=LT'} (S z)) where
+  step : (x : Nat) -> Not (x = Z) -> Accessible LT' x -> Void
+  step Z     p _           = void (p Refl)
+  step (S x) p (Access rs) = step x ?rhs1 (rs x (foo x))
 -}
